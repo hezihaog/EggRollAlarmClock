@@ -37,7 +37,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun bindView() {
-        mBinding.pickerTimeBtn.setOnClickListener {
+        mBinding.setAlarmClock.setOnClickListener {
             val activity = getActivity()
             val calendar = Calendar.getInstance().apply {
                 time = Date()

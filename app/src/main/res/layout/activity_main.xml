@@ -13,10 +13,10 @@
         android:orientation="vertical">
 
         <Button
-            android:id="@+id/picker_time_btn"
+            android:id="@+id/set_alarm_clock"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="选择闹铃时间" />
+            android:text="设置闹钟" />
 
         <TextView
             android:id="@+id/select_alarm_time"
@@ -24,6 +24,6 @@
             android:layout_height="wrap_content"
             android:textColor="@color/black"
             android:textSize="15sp"
-            tools:text="选择的时间：2021-90-24 15:03:00" />
+            tools:text="闹钟时间：2021-90-24 15:03:00" />
     </LinearLayout>
 </FrameLayout>
