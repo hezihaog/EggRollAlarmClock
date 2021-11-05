@@ -28,7 +28,7 @@ public class AlarmClockManager {
     /**
      * 定时策略
      */
-    private final CountdownStrategy mCountdownStrategy = new MiniHandlerStrategy();
+    private final CountdownStrategy mCountdownStrategy = new AlarmManagerStrategy();
 
     private AlarmClockManager() {
     }

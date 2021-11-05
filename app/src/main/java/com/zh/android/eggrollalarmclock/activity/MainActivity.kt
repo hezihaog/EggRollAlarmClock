@@ -59,7 +59,7 @@ class MainActivity : AppCompatActivity() {
                 //设置一开始选择处于的时间
                 .setDate(calendar)
                 //配置可选 年、月、日，现在需要：年、月、日、时、分
-                .setType(booleanArrayOf(true, true, true, true, true, false))
+                .setType(booleanArrayOf(false, false, false, true, true, false))
                 .setSubmitColor(ActivityCompat.getColor(activity, R.color.purple_500))
                 .setCancelColor(ActivityCompat.getColor(activity, R.color.purple_500))
                 .setTitleColor(ActivityCompat.getColor(activity, R.color.black))
