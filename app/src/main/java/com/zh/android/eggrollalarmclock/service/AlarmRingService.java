@@ -20,15 +20,17 @@ import com.zh.android.eggrollalarmclock.R;
 import com.zh.android.eggrollalarmclock.activity.AlarmShowActivity;
 import com.zh.android.eggrollalarmclock.util.MusicPlayer;
 
+import java.text.SimpleDateFormat;
+
 /**
  * 闹铃
  */
 public class AlarmRingService extends Service {
-    private static final String STARTUP_ACTION = "com.zh.android.eggrollalarmclock.action.alarmservice";
-    private static final String STOP_ACTION = "com.zh.android.eggrollalarmclock.action.alarmservice.stop";
+    private static final String STARTUP_ACTION = "startup_action";
+    private static final String STOP_ACTION = "stop_action";
 
     private static final String CHANNEL_ID = "Alarm";
-    private static final String CHANNEL_NAME = "AlarmRingService";
+    private static final String CHANNEL_NAME = "闹钟通知";
 
     private static final int NOTIFICATION_ID = 10;
 
@@ -108,13 +110,16 @@ public class AlarmRingService extends Service {
             channel.enableVibration(false);
             channel.setSound(null, null);
         }
-        @SuppressLint("UnspecifiedImmutableFlag") PendingIntent pendingIntent = PendingIntent.getActivity(
+        @SuppressLint("UnspecifiedImmutableFlag")
+        PendingIntent pendingIntent = PendingIntent.getActivity(
                 context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT
         );
+        String title = getCurrentHourMinuteTimeFormatStr() + "，闹钟时间到";
+        String content = "点我前往关闭闹钟";
         Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("蛋卷闹钟 唤醒服务")
-                .setContentText("唤醒正在响起，点击查看详情")
+                .setContentTitle(title)
+                .setContentText(content)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setCategory(NotificationCompat.CATEGORY_CALL)
                 .setContentIntent(pendingIntent)
@@ -156,5 +161,15 @@ public class AlarmRingService extends Service {
         if (mVibrator != null) {
             mVibrator.cancel();
         }
+    }
+
+    /**
+     * 获取（小时:分钟）格式化后的时间文本
+     */
+    @SuppressLint("SimpleDateFormat")
+    protected String getCurrentHourMinuteTimeFormatStr() {
+        long currentTimeMillis = System.currentTimeMillis();
+        SimpleDateFormat format = new SimpleDateFormat("HH:mm");
+        return format.format(currentTimeMillis);
     }
 }
