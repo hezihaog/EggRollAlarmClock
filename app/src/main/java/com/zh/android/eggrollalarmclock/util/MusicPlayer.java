@@ -62,4 +62,18 @@ public class MusicPlayer {
             mMediaPlayer.pause();
         }
     }
+
+    /**
+     * 停止播放
+     */
+    public void stop() {
+        if (mMediaPlayer == null) {
+            mMediaPlayer = new MediaPlayer();
+        }
+        if (mMediaPlayer.isPlaying()) {
+            mMediaPlayer.pause();
+            mMediaPlayer.release();
+            mMediaPlayer = null;
+        }
+    }
 }

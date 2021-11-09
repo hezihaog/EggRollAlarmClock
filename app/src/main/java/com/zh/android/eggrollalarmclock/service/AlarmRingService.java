@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.Vibrator;
 import android.text.TextUtils;
 
 import androidx.annotation.Nullable;
@@ -23,13 +24,27 @@ import com.zh.android.eggrollalarmclock.util.MusicPlayer;
  * 闹铃
  */
 public class AlarmRingService extends Service {
-    public static final String STARTUP_ACTION = "com.zh.android.eggrollalarmclock.action.alarmservice";
-    public static final String STOP_ACTION = "com.zh.android.eggrollalarmclock.action.alarmservice.stop";
+    private static final String STARTUP_ACTION = "com.zh.android.eggrollalarmclock.action.alarmservice";
+    private static final String STOP_ACTION = "com.zh.android.eggrollalarmclock.action.alarmservice.stop";
 
     private static final String CHANNEL_ID = "Alarm";
     private static final String CHANNEL_NAME = "AlarmRingService";
 
     private static final int NOTIFICATION_ID = 10;
+
+    private Vibrator mVibrator;
+
+    public static Intent getStartIntent(Context context) {
+        Intent intent = new Intent(context, AlarmRingService.class);
+        intent.setAction(AlarmRingService.STARTUP_ACTION);
+        return intent;
+    }
+
+    public static Intent getStopIntent(Context context) {
+        Intent intent = new Intent(context, AlarmRingService.class);
+        intent.setAction(AlarmRingService.STOP_ACTION);
+        return intent;
+    }
 
     @Nullable
     @Override
@@ -42,26 +57,44 @@ public class AlarmRingService extends Service {
         if (intent != null && !TextUtils.isEmpty(intent.getAction())) {
             if (STARTUP_ACTION.equals(intent.getAction())) {
                 //到达闹钟时间
-                Intent jumpIntent = new Intent(this, AlarmShowActivity.class)
-                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                Intent jumpIntent = new Intent(this, AlarmShowActivity.class);
+                jumpIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 //跳跳转闹钟页面
                 startActivity(jumpIntent);
                 //再显示通知
                 showHighNotification(jumpIntent, this);
                 //播放闹铃
-                MusicPlayer.getInstance().play(
-                        getApplicationContext(),
-                        "alarm_duopule.mp3",
-                        true
-                );
+                playMusic();
+                //开始振动
+                startVibrate();
             } else if (STOP_ACTION.equals(intent.getAction())) {
-                //取消闹钟通知栏
+                //取消通知
                 cancelNotification();
-                stopForeground(true);
-                stopSelf();
+                //停止播放
+                stopMusic();
+                //取消振动
+                cancelVibrate();
             }
         }
         return super.onStartCommand(intent, flags, startId);
+    }
+
+    /**
+     * 播放闹铃
+     */
+    private void playMusic() {
+        MusicPlayer.getInstance().play(
+                getApplicationContext(),
+                "radar.mp3",
+                true
+        );
+    }
+
+    /**
+     * 停止播放闹铃
+     */
+    private void stopMusic() {
+        MusicPlayer.getInstance().stop();
     }
 
     /**
@@ -100,5 +133,28 @@ public class AlarmRingService extends Service {
         NotificationManager notificationManager = (NotificationManager)
                 getApplication().getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancel(NOTIFICATION_ID);
+        stopForeground(true);
+    }
+
+    /**
+     * 开始振动
+     */
+    protected void startVibrate() {
+        if (mVibrator == null) {
+            mVibrator = (Vibrator) getSystemService(Service.VIBRATOR_SERVICE);
+        }
+        //振动时间，奇数位为振动时间，偶数为暂停时间，单位为毫秒
+        long[] pattern = {100, 2000, 1000, 1000, 3000};
+        //0为重复振动，-1为只振动一遍
+        mVibrator.vibrate(pattern, 0);
+    }
+
+    /**
+     * 取消振动
+     */
+    protected void cancelVibrate() {
+        if (mVibrator != null) {
+            mVibrator.cancel();
+        }
     }
 }

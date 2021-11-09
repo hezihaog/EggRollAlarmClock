@@ -6,6 +6,8 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Handler;
+import android.os.HandlerThread;
 
 import androidx.annotation.NonNull;
 import androidx.work.ExistingWorkPolicy;
@@ -28,7 +30,7 @@ public class AlarmClockManager {
     /**
      * 定时策略
      */
-    private final CountdownStrategy mCountdownStrategy = new AlarmManagerStrategy();
+    private final ICountdownStrategy mCountdownStrategy = new HandlerStrategy();
 
     private AlarmClockManager() {
     }
@@ -55,16 +57,13 @@ public class AlarmClockManager {
      * 获取到达闹钟设置时间时，要做的事情的Intent
      */
     private static Intent getAlarmArriveIntent(Context context) {
-        Intent intent = new Intent();
-        intent.setAction(AlarmRingService.STARTUP_ACTION);
-        intent.setPackage(context.getPackageName());
-        return intent;
+        return AlarmRingService.getStartIntent(context);
     }
 
     /**
      * 定时策略
      */
-    private abstract static class CountdownStrategy {
+    private abstract static class ICountdownStrategy {
         /**
          * 设置一个闹钟
          *
@@ -76,7 +75,7 @@ public class AlarmClockManager {
     /**
      * AlarmManager实现的定时服务
      */
-    private static class AlarmManagerStrategy extends CountdownStrategy {
+    private static class AlarmManagerStrategy extends ICountdownStrategy {
         @Override
         public void setAlarmClock(Context context, long time) {
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Service.ALARM_SERVICE);
@@ -96,16 +95,61 @@ public class AlarmClockManager {
     }
 
     /**
+     * Handler实现
+     */
+    private static class HandlerStrategy extends ICountdownStrategy {
+        private HandlerThread mHandlerThread;
+        private Handler mEventHandler;
+
+        @Override
+        protected void setAlarmClock(Context context, long time) {
+            if (mHandlerThread == null) {
+                mHandlerThread = new HandlerThread("alarm-clock-handler-thread");
+                mHandlerThread.start();
+            }
+            if (mEventHandler == null) {
+                mEventHandler = new Handler(mHandlerThread.getLooper());
+            }
+            startCountdownTimer(context, time);
+        }
+
+        /**
+         * 开启定时器
+         *
+         * @param time 到期时间
+         */
+        private void startCountdownTimer(Context context, long time) {
+            mEventHandler.removeCallbacksAndMessages(null);
+            mEventHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    //精确到秒值即可
+                    boolean isArrive = (time / 1000) - (System.currentTimeMillis() / 1000) == 0;
+                    //到时间了
+                    if (isArrive) {
+                        Intent alarmArriveIntent = getAlarmArriveIntent(context);
+                        context.startService(alarmArriveIntent);
+                        mHandlerThread.quitSafely();
+                    } else {
+                        //没到时间，继续倒计时
+                        mEventHandler.postDelayed(this, 1000);
+                    }
+                }
+            }, 1000);
+        }
+    }
+
+    /**
      * MiniHandler实现
      */
-    private static class MiniHandlerStrategy extends CountdownStrategy {
+    private static class MiniHandlerStrategy extends ICountdownStrategy {
         private MiniHandler mEventHandler;
         private MiniHandlerThread mHandlerThread;
 
         @Override
         public void setAlarmClock(Context context, long time) {
             if (mHandlerThread == null) {
-                mHandlerThread = new MiniHandlerThread("alarm-clock-handler-thread");
+                mHandlerThread = new MiniHandlerThread("alarm-clock-mini-handler-thread");
                 mHandlerThread.start();
             }
             if (mEventHandler == null) {
@@ -130,6 +174,7 @@ public class AlarmClockManager {
                     if (isArrive) {
                         Intent alarmArriveIntent = getAlarmArriveIntent(context);
                         context.startService(alarmArriveIntent);
+                        mHandlerThread.quitSafely();
                     } else {
                         //没到时间，继续倒计时
                         mEventHandler.postDelayed(this, 1000);
@@ -142,7 +187,7 @@ public class AlarmClockManager {
     /**
      * WorkManager实现
      */
-    private static class WorkManagerStrategy extends CountdownStrategy {
+    private static class WorkManagerStrategy extends ICountdownStrategy {
         private static final String UNIQUE_WORK_NAME = "UNIQUE_WORK_NAME_ALARM";
 
         @Override
