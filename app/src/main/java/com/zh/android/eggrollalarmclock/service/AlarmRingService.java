@@ -61,10 +61,10 @@ public class AlarmRingService extends Service {
                 //到达闹钟时间
                 Intent jumpIntent = new Intent(this, AlarmShowActivity.class);
                 jumpIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                //跳跳转闹钟页面
+                //跳转闹钟页面
                 startActivity(jumpIntent);
-                //再显示通知
-                showHighNotification(jumpIntent, this);
+                //显示通知
+                showHighNotification(new Intent(jumpIntent), this);
                 //播放闹铃
                 playMusic();
                 //开始振动

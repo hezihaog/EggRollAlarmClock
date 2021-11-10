@@ -30,7 +30,7 @@ public class AlarmClockManager {
     /**
      * 定时策略
      */
-    private final ICountdownStrategy mCountdownStrategy = new HandlerStrategy();
+    private final ICountdownStrategy mCountdownStrategy = new WorkManagerStrategy();
 
     private AlarmClockManager() {
     }
